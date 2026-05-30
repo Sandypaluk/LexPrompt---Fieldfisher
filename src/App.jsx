@@ -124,9 +124,10 @@ function PersonaBadge({ persona }) {
   );
 }
 
-function BrowseScreen({ onCopy, copiedId }) {
+function BrowseScreen({ onCopy, copiedId, extraPrompts = [] }) {
   const [filter, setFilter] = useState("all");
-  const filtered = filter === "all" ? PROMPTS : PROMPTS.filter(p => p.persona === filter);
+  const allPrompts = [...PROMPTS, ...extraPrompts];
+  const filtered = filter === "all" ? allPrompts : allPrompts.filter(p => p.persona === filter);
 
   return (
     <div>
@@ -177,11 +178,13 @@ function BrowseScreen({ onCopy, copiedId }) {
   );
 }
 
-function SubmitScreen({ sessionCount, onSubmit }) {
+function SubmitScreen({ sessionCount, onSubmit, onAddPrompt }) {
   const [persona, setPersona] = useState("");
   const [promptText, setPromptText] = useState("");
   const [result, setResult] = useState(null);
   const [scoring, setScoring] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
 
   const handleScore = () => {
     if (!promptText.trim()) return;
@@ -266,6 +269,48 @@ function SubmitScreen({ sessionCount, onSubmit }) {
             ))}
           </div>
 
+          {result.verdict === "approved" && (
+            <div style={{ marginBottom: 16 }}>
+              {!showAddForm ? (
+                <button onClick={() => setShowAddForm(true)} style={{
+                  width: "100%", padding: "10px 0", borderRadius: 8,
+                  border: "1.5px solid #0C447C", background: "#E6F1FB",
+                  color: "#0C447C", fontSize: 14, fontWeight: 500, cursor: "pointer"
+                }}>+ Add to Prompt Bank</button>
+              ) : (
+                <div style={{ background: "#fff", border: "0.5px solid #e0dfd8", borderRadius: 12, padding: "1rem" }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: "#555", display: "block", marginBottom: 6 }}>
+                    Prompt title
+                  </label>
+                  <input value={newTitle} onChange={e => setNewTitle(e.target.value)}
+                    placeholder="e.g. Contract risk summary"
+                    style={{
+                      width: "100%", fontSize: 14, padding: "8px 10px",
+                      borderRadius: 8, border: "0.5px solid #d0d0cc", marginBottom: 12
+                    }} />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => {
+                      if (!newTitle.trim()) return;
+                      onAddPrompt({ title: newTitle, text: promptText, persona, category: "drafting", complexity: "Intermediate" });
+                      setShowAddForm(false);
+                      setNewTitle("");
+                      setPromptText("");
+                      setResult(null);
+                    }} style={{
+                      padding: "8px 20px", borderRadius: 8, border: "none",
+                      background: "#0C447C", color: "#fff", fontSize: 14, cursor: "pointer", fontWeight: 500
+                    }}>Confirm add</button>
+                    <button onClick={() => setShowAddForm(false)} style={{
+                      padding: "8px 20px", borderRadius: 8,
+                      border: "0.5px solid #d0d0cc", background: "transparent",
+                      color: "#666", fontSize: 14, cursor: "pointer"
+                    }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {result.verdict !== "approved" && (
             <div style={{
               borderLeft: "2px solid #0C447C", borderRadius: "0 8px 8px 0",
@@ -330,6 +375,7 @@ export default function LexPrompt() {
   const [screen, setScreen] = useState("browse");
   const [copiedId, setCopiedId] = useState(null);
   const [sessionCount, setSessionCount] = useState(0);
+  const [extraPrompts, setExtraPrompts] = useState([]);
 
   const handleCopy = (prompt) => {
     navigator.clipboard.writeText(prompt.text).then(() => {
@@ -339,6 +385,11 @@ export default function LexPrompt() {
   };
 
   const handleSubmit = () => setSessionCount(c => c + 1);
+
+  const handleAddPrompt = (prompt) => {
+    setExtraPrompts(p => [...p, { ...prompt, id: Date.now() }]);
+    setScreen("browse");
+  };
 
   const navItems = [
     { id: "browse", label: "Browse" },
@@ -378,8 +429,8 @@ export default function LexPrompt() {
       </div>
 
       <div style={{ padding: "24px" }}>
-        {screen === "browse" && <BrowseScreen onCopy={handleCopy} copiedId={copiedId} />}
-        {screen === "submit" && <SubmitScreen sessionCount={sessionCount} onSubmit={handleSubmit} />}
+        {screen === "browse" && <BrowseScreen onCopy={handleCopy} copiedId={copiedId} extraPrompts={extraPrompts} />}
+        {screen === "submit" && <SubmitScreen sessionCount={sessionCount} onSubmit={handleSubmit} onAddPrompt={handleAddPrompt} />}
         {screen === "stats" && <StatsScreen sessionCount={sessionCount} />}
       </div>
     </div>
