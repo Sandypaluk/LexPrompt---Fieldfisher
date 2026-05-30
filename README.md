@@ -34,7 +34,12 @@ It was built as a demonstration of how AI enablement infrastructure can be desig
 - Live session tracking
 - CLEAR framework reference panel
 - Library overview by persona and category
-
+  
+### Add to Prompt Bank
+- Approved prompts can be added to the live library instantly
+- Contributors give their prompt a title before confirming
+- Added prompts appear immediately in the Browse tab filtered by persona
+- Fresh slate each session — keeps the demo clean and focused
 ---
 
 ## The CLEAR Framework
